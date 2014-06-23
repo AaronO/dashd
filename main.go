@@ -43,30 +43,34 @@ func main() {
         // Run uptime command
         rawOutput, err := exec.Command("ps", "aux").Output()
 
-        // Convert output to a string (it's not binary data, so this is ok)
-        output := string(rawOutput[:])
-
         if err != nil {
             return nil, err
         }
 
-        // We'll add all the parsed lines here
-        var entries [][]string
-
-        // Lines of output
-        lines := strings.Split(output, "\n")
-
-        // Skip first and last line of output
-        for _, str := range lines[1:len(lines)-1] {
-
-            entries = append(entries, strings.Fields(str))
-        }
-
-        return json.Marshal(entries)
+        return json.Marshal(parseCommandTable(rawOutput))
     })
 
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
     m.Run()
+}
+
+
+func parseCommandTable(rawOutput []byte) [][]string {
+    // Convert output to a string (it's not binary data, so this is ok)
+    output := string(rawOutput[:])
+
+    // We'll add all the parsed lines here
+    var entries [][]string
+
+    // Lines of output
+    lines := strings.Split(output, "\n")
+
+    // Skip first and last line of output
+    for _, str := range lines[1:len(lines)-1] {
+        entries = append(entries, strings.Fields(str))
+    }
+
+    return entries
 }
