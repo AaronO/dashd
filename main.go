@@ -134,6 +134,36 @@ func main() {
         return json.Marshal(records)
     })
 
+    m.Get("/sh/online.php", func () ([]byte, error) {
+        raw, err := exec.Command("w").Output()
+
+        if err != nil {
+            return nil, err
+        }
+
+        lines := strings.Split(string(raw[:]), "\n")
+
+        // We'll add all the parsed lines here
+        var entries [][]string
+
+        // Skip first and last line of output
+        for _, str := range lines[2:len(lines)-1] {
+            fields := strings.Fields(str)
+            entries = append(entries, []string{
+                // User
+                fields[0],
+                // From
+                fields[2],
+                // Login at
+                fields[3],
+                // Idle
+                fields[4],
+            })
+        }
+
+        return json.Marshal(entries)
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
