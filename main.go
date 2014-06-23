@@ -310,6 +310,49 @@ func main() {
         return json.Marshal(entries)
     })
 
+    m.Get("/sh/mem.php", func () ([]byte, error) {
+        var entries []string
+
+        raw, err := exec.Command("free", "-m").Output()
+
+        if err != nil {
+            // OS X fallback
+            raw, err := exec.Command("vm_stat").Output()
+
+            if err != nil {
+                return nil, err
+            }
+
+            vmMap := parseCommandMap(raw)
+
+            freePages := toMB(vmMap["Pages free"])
+            activePages := toMB(vmMap["Pages active"])
+            inactivePages := toMB(vmMap["Pages inactive"])
+            speculativePages := toMB(vmMap["Pages speculative"])
+
+            free := freePages + speculativePages
+            used := activePages + inactivePages
+
+            return json.Marshal([]string{
+                "Mem:",
+
+                // Total
+                strconv.Itoa(free + used),
+
+                // Used
+                strconv.Itoa(used),
+
+                // Free
+                strconv.Itoa(free),
+            })
+        }
+
+        // Linux
+        entries = parseCommandTable(raw, 2, 1)[0][:4]
+
+        return json.Marshal(entries)
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
@@ -334,6 +377,37 @@ func parseCommandTable(rawOutput []byte, headerCount int, footerCount int) [][]s
     return entries
 }
 
+func parseCommandMap(rawOutput []byte) map[string]string {
+    data := make(map[string]string)
+
+    // Convert output to a string (it's not binary data, so this is ok)
+    output := string(rawOutput[:])
+
+    // Lines of output
+    lines := strings.Split(output, "\n")
+
+    for _, line := range lines {
+        parts := strings.Split(line, ":")
+
+        // Bad line, skip it
+        if len(parts) != 2 {
+            continue
+        }
+
+        key := strings.TrimSpace(parts[0])
+        value := strings.TrimSpace(parts[1])
+
+        // Remove trailing dot if exists
+        if value[len(value) - 1] == '.' {
+            value = value[:len(value) - 1]
+        }
+
+        data[key] = value
+    }
+
+    return data
+}
+
 // Get average pingTime to a host
 func pingHost(hostname string, pingCount int) (string, error) {
     raw, err := exec.Command("ping", "-c", strconv.Itoa(pingCount), hostname).Output()
@@ -355,4 +429,11 @@ func pingHost(hostname string, pingCount int) (string, error) {
     pingTime := strings.Split(strings.Split(lastLine, "=")[1], "/")[1]
 
     return pingTime, nil
+}
+
+func toMB(x string) int {
+    num, _ := strconv.ParseInt(x, 10, 32)
+
+    // 256 = 4096 / (1024 * 1024)
+    return int(num) / 256
 }
