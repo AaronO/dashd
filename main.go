@@ -49,7 +49,7 @@ func main() {
             return nil, err
         }
 
-        return json.Marshal(parseCommandTable(rawOutput))
+        return json.Marshal(parseCommandTable(rawOutput, 1, 1))
     })
 
     m.Get("/sh/df.php", func () ([]byte, error) {
@@ -60,7 +60,7 @@ func main() {
             return nil, err
         }
 
-        return json.Marshal(parseCommandTable(rawOutput))
+        return json.Marshal(parseCommandTable(rawOutput, 1, 1))
     })
 
     m.Get("/sh/time.php", func () ([]byte, error) {
@@ -170,7 +170,7 @@ func main() {
     m.Run()
 }
 
-func parseCommandTable(rawOutput []byte) [][]string {
+func parseCommandTable(rawOutput []byte, headerCount int, footerCount int) [][]string {
     // Convert output to a string (it's not binary data, so this is ok)
     output := string(rawOutput[:])
 
@@ -181,7 +181,7 @@ func parseCommandTable(rawOutput []byte) [][]string {
     lines := strings.Split(output, "\n")
 
     // Skip first and last line of output
-    for _, str := range lines[1:len(lines)-1] {
+    for _, str := range lines[headerCount:len(lines)-footerCount] {
         entries = append(entries, strings.Fields(str))
     }
 
