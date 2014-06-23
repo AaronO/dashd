@@ -364,9 +364,10 @@ dashboard.getPing = function () {
         },
         complete: function() {
             refreshIcon.removeClass('icon-spin');
-        }
+        },
+        dataType: "json",
     });
-}
+};
 
 dashboard.getIspeed = function () {
     var rateUpstream = $("#ispeed-rate-upstream");
