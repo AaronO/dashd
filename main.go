@@ -71,6 +71,16 @@ func main() {
         return json.Marshal(string(raw[:]))
     })
 
+    m.Get("/sh/issue.php", func () ([]byte, error) {
+        raw, err := exec.Command("uname", "-rsm").Output()
+
+        if err != nil {
+            return nil, err
+        }
+
+        return json.Marshal(string(raw[:]))
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
