@@ -161,6 +161,41 @@ func main() {
         return json.Marshal(entries)
     })
 
+    m.Get("/sh/loadavg.php", func () ([]byte, error) {
+        raw, err := exec.Command("w").Output()
+
+        if err != nil {
+            return nil, err
+        }
+
+        lines := strings.Split(string(raw[:]), "\n")
+        headers := strings.Fields(lines[0])
+
+        var cpuLoads [][2]string
+
+        // Last 3 headers are CPU loads, clean them up
+        for _, load := range headers[len(headers)-3:] {
+            // Remove trailing coma if there
+            cleanLoad := strings.Split(string(load), ",")[0]
+
+            loadFloat, err := strconv.ParseFloat(cleanLoad, 32)
+
+            if err != nil {
+                continue
+            }
+
+            loadPercentage := int(loadFloat * 100) / runtime.NumCPU()
+
+            cpuLoads = append(cpuLoads, [2]string{
+                cleanLoad,
+                strconv.Itoa(loadPercentage),
+            })
+        }
+
+        return json.Marshal(cpuLoads)
+    })
+
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
