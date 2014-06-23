@@ -276,6 +276,40 @@ func main() {
         return json.Marshal(output)
     })
 
+    m.Get("/sh/where.php", func () ([]byte, error) {
+        SOFTWARE := []string{
+            "php",
+            "node",
+            "mysql",
+            "vim",
+            "python",
+            "ruby",
+            "java",
+            "apache2",
+            "nginx",
+            "openssl",
+            "vsftpd",
+            "make",
+        }
+
+        var entries [][2]string
+
+        for _, bin := range SOFTWARE {
+            path, err := exec.LookPath(bin)
+
+            if err != nil {
+                path = "Not Installed"
+            }
+
+            entries = append(entries, [2]string{
+                bin,
+                path,
+            })
+        }
+
+        return json.Marshal(entries)
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
