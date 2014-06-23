@@ -4,6 +4,8 @@ import (
     "os"
     "os/exec"
 
+    "errors"
+
     "io/ioutil"
 
     "log"
@@ -195,6 +197,32 @@ func main() {
         return json.Marshal(cpuLoads)
     })
 
+    m.Get("/sh/ping.php", func () ([]byte, error) {
+        HOSTS := [4]string{
+            "wikipedia.org",
+            "github.com",
+            "google.com",
+            "gnu.org",
+        }
+
+        var entries [][]string
+
+        for _, host := range HOSTS {
+            ping, err := pingHost(host, 2)
+
+            if err != nil {
+                continue
+            }
+
+            entries = append(entries, []string{
+                host,
+                ping,
+            })
+        }
+
+        return json.Marshal(entries)
+    })
+
 
     // Serve static files
     m.Get("/.*", martini.Static(""))
@@ -218,4 +246,27 @@ func parseCommandTable(rawOutput []byte, headerCount int, footerCount int) [][]s
     }
 
     return entries
+}
+
+// Get average pingTime to a host
+func pingHost(hostname string, pingCount int) (string, error) {
+    raw, err := exec.Command("ping", "-c", strconv.Itoa(pingCount), hostname).Output()
+
+    if err != nil {
+        return "", err
+    }
+
+    lines := strings.Split(string(raw[:]), "\n")
+
+    if len(lines) < 2 {
+        return "", errors.New("Bad output for ping command")
+    }
+
+    // Get 2nd last line
+    lastLine := lines[len(lines)-2]
+
+    // Extract average ping time as a string
+    pingTime := strings.Split(strings.Split(lastLine, "=")[1], "/")[1]
+
+    return pingTime, nil
 }
