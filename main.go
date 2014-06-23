@@ -353,6 +353,48 @@ func main() {
         return json.Marshal(entries)
     })
 
+    m.Get("/sh/lastlog.php", func () ([]byte, error) {
+        raw, err := exec.Command("last").Output()
+
+        if err != nil {
+            return nil, err
+        }
+
+        entries := parseCommandTable(raw, 0, 3)
+
+        var data [][]string
+
+        for _, entry := range entries {
+            var row []string
+
+            // Non user action
+            if entry[1] == "~" {
+                continue
+            }
+
+            if runtime.GOOS == "linux" {
+                row = []string{
+                    // Username
+                    entry[0],
+                    entry[2],
+                    strings.Join(entry[3:6], " "),
+                }
+            } else if runtime.GOOS == "darwin" {
+                row = []string{
+                    // Username
+                    entry[0],
+                    // From
+                    "",
+                    strings.Join(entry[2:6], " "),
+                }
+            }
+
+            data = append(data, row)
+        }
+
+        return json.Marshal(data)
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
