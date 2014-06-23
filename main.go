@@ -223,6 +223,58 @@ func main() {
         return json.Marshal(entries)
     })
 
+    m.Get("/sh/netstat.php", func () ([]byte, error) {
+        raw, err := exec.Command("netstat", "-nt").Output()
+
+        if err != nil {
+            return nil, err
+        }
+
+        // Get entries as a table
+        entries := parseCommandTable(raw, 2, 1)
+
+        // Connections we care about
+        var connections [][]string
+
+        // Filter by protocol
+        for _, entry := range entries {
+            // Skip bad entries or non tcp
+            if len(entry) != 6 || (entry[0] != "tcp" && entry[0] != "tcp4") {
+                continue
+            }
+
+            connections = append(connections, entry)
+        }
+
+        // Count connections from a machine
+        connectionCount := make(map[string]int)
+
+        // Extract
+        for _, conn := range connections {
+            // Foreign Address
+            remoteAddr := conn[4]
+
+            // Increment counter
+            connectionCount[remoteAddr]++
+        }
+
+        // Expected output by client
+        var output [][2]string
+
+        for remoteAddr, count := range connectionCount {
+            // Compensate for difference between OSX and linux
+            parts := strings.Split(strings.Replace(remoteAddr, ",", ".", 1), ".")
+            ip := strings.Join(parts[:4], ".")
+            // port := parts[4]
+
+            output = append(output, [2]string{
+                strconv.Itoa(count),
+                ip,
+            })
+        }
+
+        return json.Marshal(output)
+    })
 
     // Serve static files
     m.Get("/.*", martini.Static(""))
