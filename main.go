@@ -4,12 +4,14 @@ import (
     "os"
     "os/exec"
 
-//    "log"
+    "io/ioutil"
+
+    "log"
 
 //    "fmt"
     "strings"
     "runtime"
-//    "strconv" // For Itoa
+    "strconv" // For Itoa
 //    "encoding/csv"
     "encoding/json"
 
@@ -81,12 +83,62 @@ func main() {
         return json.Marshal(string(raw[:]))
     })
 
+    m.Get("/sh/users.php", func () ([]byte, error) {
+        data, err := ioutil.ReadFile("/etc/passwd")
+
+        if err != nil {
+            return nil, err
+        }
+
+        lines := strings.Split(string(data), "\n")
+
+        // Output records
+        var records [][]string
+
+        for _, line := range lines {
+            parts := strings.Split(line, ":")
+
+            // Skip bad or empty lines
+            if len(parts) != 7 {
+                log.Println(len(parts))
+                continue
+            }
+
+            // Parse base 10, 16 bit UID integer
+            uid, err := strconv.ParseInt(parts[2], 10, 16)
+
+            // Error parsing UID
+            if err != nil {
+                continue
+            }
+
+            userType := "user"
+
+            // Check if system user
+            if uid <= 499 {
+                userType = "system"
+            }
+
+            user := []string{
+                // User type
+                userType,
+                // Username
+                parts[0],
+                // Home directory
+                parts[6],
+            }
+
+            records = append(records, user)
+        }
+
+        return json.Marshal(records)
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
     m.Run()
 }
-
 
 func parseCommandTable(rawOutput []byte) [][]string {
     // Convert output to a string (it's not binary data, so this is ok)
