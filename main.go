@@ -61,6 +61,16 @@ func main() {
         return json.Marshal(parseCommandTable(rawOutput))
     })
 
+    m.Get("/sh/time.php", func () ([]byte, error) {
+        raw, err := exec.Command("date").Output()
+
+        if err != nil {
+            return nil, err
+        }
+
+        return json.Marshal(string(raw[:]))
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
