@@ -50,6 +50,17 @@ func main() {
         return json.Marshal(parseCommandTable(rawOutput))
     })
 
+    m.Get("/sh/df.php", func () ([]byte, error) {
+        // Run uptime command
+        rawOutput, err := exec.Command("df", "-Ph").Output()
+
+        if err != nil {
+            return nil, err
+        }
+
+        return json.Marshal(parseCommandTable(rawOutput))
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
