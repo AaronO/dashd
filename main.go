@@ -323,7 +323,7 @@ func main() {
                 return nil, err
             }
 
-            vmMap := parseCommandMap(raw)
+            vmMap := parseCommandMap(string(raw[:]))
 
             freePages := toMB(vmMap["Pages free"])
             activePages := toMB(vmMap["Pages active"])
@@ -396,10 +396,35 @@ func main() {
     })
 
     m.Get("/sh/swap.php", func () ([]byte, error) {
+        // Linux
         data, err := ioutil.ReadFile("/proc/swaps")
 
         if err != nil {
-            return nil, err
+            // OS X fallback
+            stats, err := topStats()
+
+            // Failed everything
+            if err != nil {
+                return nil, err
+            }
+
+            fields := strings.Fields(stats["Swap"])
+
+            used, _ := strconv.ParseInt(fields[0][:len(fields[0])-1], 10, 32)
+            free, _ := strconv.ParseInt(fields[2][:len(fields[2])-1], 10, 32)
+
+            usedB := mbToB(int(used))
+            freeB := mbToB(int(free))
+
+            return json.Marshal([][]string{
+                {
+                    "/var/vm/swapfile0",
+                    "file",
+                    readableSize(usedB + freeB),
+                    readableSize(usedB),
+                    "-1",
+                },
+            })
         }
 
         return json.Marshal(parseCommandTable(data, 1, 0))
@@ -429,11 +454,8 @@ func parseCommandTable(rawOutput []byte, headerCount int, footerCount int) [][]s
     return entries
 }
 
-func parseCommandMap(rawOutput []byte) map[string]string {
+func parseCommandMap(output string) map[string]string {
     data := make(map[string]string)
-
-    // Convert output to a string (it's not binary data, so this is ok)
-    output := string(rawOutput[:])
 
     // Lines of output
     lines := strings.Split(output, "\n")
@@ -488,4 +510,37 @@ func toMB(x string) int {
 
     // 256 = 4096 / (1024 * 1024)
     return int(num) / 256
+}
+
+
+func mbToB(x int) int {
+    return x * 1024 * 1024
+}
+
+// output frstring "top" command on OS X
+func topStats() (map[string]string, error) {
+    raw, err := exec.Command("top", "-S", "-l", "1", "-n", "0").Output()
+
+    if err != nil {
+        return nil, err
+    }
+
+    return parseCommandMap(string(raw[:])), nil
+}
+
+func readableSize(x int) string {
+    KB := 1024
+    MB := KB * KB
+    GB := KB * KB * KB
+
+    // Bytes
+    if x < KB {
+        return strconv.Itoa(x) + "b"
+    } else if x < MB {
+        return strconv.Itoa(x/KB) + "kb"
+    } else if x < GB {
+        return strconv.Itoa(x/MB) + "mb"
+    }
+    // else
+    return strconv.Itoa(x/GB) + "gb"
 }
