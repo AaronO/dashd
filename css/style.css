@@ -85,7 +85,7 @@ textarea {
 }
 
 .navbar-fixed-top {
-	position: static;
+	position: fixed;
 }
 
 .navbar .nav a {
@@ -412,7 +412,6 @@ textarea {
 }
 
 .widget-content {
-	padding: 20px 15px 15px;
 	background: #FFF;
 
 
@@ -1356,4 +1355,12 @@ width: 11px;}
 .number-of-cores > .lead {
 	font-size: 12px;
 	font-weight: bold;
+}
+
+.big_stats {
+	margin-top: 0;
+}
+
+.big_stats .stat {
+	padding-top: 5px;
 }
