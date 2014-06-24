@@ -395,6 +395,16 @@ func main() {
         return json.Marshal(data)
     })
 
+    m.Get("/sh/swap.php", func () ([]byte, error) {
+        data, err := ioutil.ReadFile("/proc/swaps")
+
+        if err != nil {
+            return nil, err
+        }
+
+        return json.Marshal(parseCommandTable(data, 1, 0))
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
