@@ -109,8 +109,21 @@ dashboard.getPs = function () {
         destroy_dataTable("ps_dashboard");
         $("#filter-ps").val("").off("keyup");
 
+        // Reduce long commands
+        var cleanData = data.map(function(entry) {
+            var command = entry[10];
+
+            var cleanCommand = (
+                command.length > 70 ?
+                command.slice(0, 32)+"..."+command.slice(command.length-35):
+                command
+            );
+
+            return entry.slice(0, 10).concat(cleanCommand);
+        });
+
         var psTable = $("#ps_dashboard").dataTable({
-            aaData: data,
+            aaData: cleanData,
             aoColumns: [
                 { sTitle: "USER" },
                 { sTitle: "PID" },
