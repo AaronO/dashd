@@ -409,7 +409,8 @@ dashboard.getIspeed = function () {
         },
         complete: function() {
             refreshIcon.removeClass('icon-spin');
-        }
+        },
+        dataType: "json",
     });
 
     // update unit value in widget
