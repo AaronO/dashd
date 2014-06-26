@@ -4,8 +4,12 @@ import (
     "os"
     "os/exec"
 
+    "time"
+    "net/http"
+
     "errors"
 
+    "io"
     "io/ioutil"
 
     "log"
@@ -430,6 +434,21 @@ func main() {
         return json.Marshal(parseCommandTable(data, 1, 0))
     })
 
+    m.Get("/sh/speed.php", func () ([]byte, error) {
+        speed, err := downloadSpeed("http://cachefly.cachefly.net/10mb.test")
+
+        if err != nil {
+            return nil, err
+        }
+
+        data := make(map[string]float64)
+
+        data["downstream"] = speed
+        data["upstream"] = 0.0
+
+        return json.Marshal(data)
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
@@ -543,4 +562,51 @@ func readableSize(x int) string {
     }
     // else
     return strconv.Itoa(x/GB) + "gb"
+}
+
+// Download speed in kb/s
+func downloadSpeed(url string) (float64, error) {
+    resp, err := http.Get(url)
+
+    if err != nil {
+        return 0, err
+    }
+
+    total := 0
+
+    // Read by 4k chunks
+    buffer := make([]byte, 4096)
+
+    // Start
+    t1 := time.Now().UnixNano()
+
+    for {
+        buffer = buffer[:cap(buffer)]
+        n, err := resp.Body.Read(buffer)
+
+        total += n
+
+        if err != nil {
+            // EOF, that's good, now exit
+            if err == io.EOF {
+                break
+            }
+
+            return 0.0, err
+        }
+
+    }
+
+    t2 := time.Now().UnixNano()
+
+    // Time in seconds
+    duration := float64(t2 - t1) / 1000000000.0
+
+    // Actual download speed in kb/s
+    speed := float64(total) / duration
+
+    log.Println("Total :", total)
+    log.Println("Duration :", duration)
+
+    return speed, nil
 }
