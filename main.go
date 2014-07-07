@@ -4,6 +4,8 @@ import (
     "os"
     "os/exec"
 
+    "./probe"
+
     "time"
     "net/http"
 
@@ -449,6 +451,16 @@ func main() {
         return json.Marshal(data)
     })
 
+    m.Get("/sh/uptime.php", func () ([]byte, error) {
+        uptime, err := probe.Uptime()
+
+        if err != nil {
+            return nil, err
+        }
+
+        return json.Marshal(formatUptime(uptime))
+    })
+
     // Serve static files
     m.Get("/.*", martini.Static(""))
 
@@ -499,6 +511,10 @@ func parseCommandMap(output string) map[string]string {
     }
 
     return data
+}
+
+func formatUptime(uptime int64) string {
+    return time.Duration(uptime * 1000000000).String()
 }
 
 // Get average pingTime to a host
