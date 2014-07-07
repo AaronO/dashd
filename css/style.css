@@ -1364,3 +1364,12 @@ width: 11px;}
 .big_stats .stat {
 	padding-top: 5px;
 }
+
+.widget-buttons {
+	float: right;
+	margin-right: 10px;
+}
+
+.widget-buttons > .btn {
+	margin-left: 2px;
+}

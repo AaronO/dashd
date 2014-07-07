@@ -9,7 +9,7 @@ $(document).ready(function() {
     $(".pop").popover();
 
    // activate tooltips on hover
-   $("[data-toggle='tooltip']").tooltip({trigger: 'hover', placement:'right'});  
+   $("[data-toggle='tooltip']").tooltip({trigger: 'hover', placement:'right'});
 
     dashboard.getAll();
 }).on("click", ".js-smoothscroll", function(event) {
@@ -125,12 +125,9 @@ $('#open-all-widgets').click(function(){
     });
 });
 
-// attach a close button to all widget headers
-$('.widget-header').append('<div class="btn btn-icon-only icon-remove hide-widget"></div>');
-
 // hide / close widget function
 $('.hide-widget').live('click',function(){
-    var widget = $(this).parent().parent();
+    var widget = $(this).parent().parent().parent();
     hideWidget(widget, 300);
 });
 
@@ -150,7 +147,7 @@ $('.open-widget').live('click',function(){
 
 function openWidget(widget, widgetIdentifier, speed){
 
-    // decrement closed-widget-count 
+    // decrement closed-widget-count
     if(widget.is(":hidden")) {
         closedWidgetCount.text( Number(closedWidgetCount.text()) - 1);
     }
@@ -172,7 +169,7 @@ function openWidget(widget, widgetIdentifier, speed){
 function hideWidget(widget, speed){
     // cache DOM objects/data used in this function
     var widgetName = widget.find('.widget-header h3').text();
-    var widgetIdentifier = widget.attr('id'); 
+    var widgetIdentifier = widget.attr('id');
 
     // update count
     if(!widget.is(":hidden")) {
@@ -221,5 +218,5 @@ function keepWidgetOrdered(){
 
 function isInArray(array, search)
 {
-    return (array.indexOf(search) >= 0) ? true : false; 
+    return (array.indexOf(search) >= 0) ? true : false;
 }
