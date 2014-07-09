@@ -204,7 +204,7 @@ func main() {
     })
 
     m.Get("/sh/ping.php", func () ([]byte, error) {
-        HOSTS := [4]string{
+        HOSTS := []string{
             "wikipedia.org",
             "github.com",
             "google.com",
@@ -213,17 +213,30 @@ func main() {
 
         var entries [][]string
 
+        ch := make(chan []string)
+
         for _, host := range HOSTS {
-            ping, err := pingHost(host, 2)
+            go func(host string) {
+                ping, err := pingHost(host, 2)
 
-            if err != nil {
-                continue
-            }
+                if err != nil {
+                    ch <- []string{
+                        host,
+                        "FAILED",
+                    }
+                    return
+                }
 
-            entries = append(entries, []string{
-                host,
-                ping,
-            })
+                ch <- []string{
+                    host,
+                    ping,
+                }
+            }(host)
+        }
+
+        // Gather results
+        for i := 0; i < len(HOSTS); i++ {
+            entries = append(entries, <-ch)
         }
 
         return json.Marshal(entries)
