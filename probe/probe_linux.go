@@ -4,7 +4,7 @@ import (
     "syscall"
 )
 
-func Uptime() (int, error) {
+func Uptime() (int64, error) {
     var info syscall.Sysinfo_t
 
     err := syscall.Sysinfo(&info)
