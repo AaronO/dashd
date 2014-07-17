@@ -409,6 +409,10 @@ textarea {
 
 	border: none;
 	background: none;
+	box-shadow: none;
+}
+.widget-header [class^="icon-"]:hover, .widget-header [class*=" icon-"]:hover {
+	background: #4274F4;
 }
 
 .widget-content {
