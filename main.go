@@ -485,13 +485,14 @@ func parseCommandTable(rawOutput []byte, headerCount int, footerCount int) [][]s
     output := string(rawOutput[:])
 
     // We'll add all the parsed lines here
-    var entries [][]string
+    entries := [][]string{}
 
     // Lines of output
     lines := strings.Split(output, "\n")
 
     // Skip first and last line of output
     for _, str := range lines[headerCount:len(lines)-footerCount] {
+        if str == "" { continue }
         entries = append(entries, strings.Fields(str))
     }
 
